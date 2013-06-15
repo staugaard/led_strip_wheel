@@ -17,7 +17,6 @@ prog_uchar *rowOffset;
 
 const byte numberOfStrips      = 4;
 const byte numberOfPixels      = 15;
-const int numberOfSpeedSensors = 1;
 const int resolution           = 256;
 const int topRowOffset         = (resolution * -0.1);
 const int maxTime              = 700;
@@ -93,10 +92,7 @@ void loop() {
 }
 
 void positionSensorInterrupt() {
-  speedSensorInterrupt();
-}
-
-void speedSensorInterrupt() {
-  millisPerRound = (millis() - lastSpeedInterrupt) * numberOfSpeedSensors;
+  millisPerRound = millis() - lastSpeedInterrupt;
   lastSpeedInterrupt = millis();
 }
+
