@@ -75,7 +75,10 @@
         for (var i = 0; i < resolution; i++) {
 
           for (var pixel = 0; pixel < pixelCount; pixel++) {
-            c = c + ' ' + data[i][pixel][0] + ',' + data[i][pixel][1] + ',' + data[i][pixel][2] + ','
+            c = c + ' ' + data[i][pixel][0] + ',' + data[i][pixel][1] + ',' + data[i][pixel][2];
+            if (i < resolution - 1 || pixel < pixelCount - 1) {
+              c = c + ',';
+            }
           }
 
           c = c + '\n';
