@@ -1,0 +1,105 @@
+<html>
+  <head>
+    <title></title>
+    <style type="text/css">
+      body {
+        background-color: black;
+      }
+
+      #c {
+        width: 1000px;
+        height: 200px;
+      }
+    </style>
+  </head>
+  <body>
+    <p>
+      <input type="file" id="fileSelector" multiple accept="image/*" />
+    </p>
+    <p>
+      <canvas id="wheel" width="500" height="500"></canvas>
+      <canvas id="copy" width="500" height="500"></canvas>
+    </p>
+    <p>
+    <textarea id="c"></textarea>
+    </p>
+
+    <script type="text/javascript">
+      var wheel = document.getElementById('wheel');
+
+      var canvasRadius = wheel.width / 2;
+      var deadRadius   = canvasRadius / 5;
+      var resolution   = 256;
+      var pixelCount   = 15;
+
+      var circleRadi = [];
+
+      var data = [];
+
+      for (var pixel = 0; pixel < pixelCount; pixel++) {
+        circleRadi[pixel] = ((canvasRadius - deadRadius) / pixelCount) * pixel + deadRadius;
+      }
+
+      function scanImage(img) {
+        data = []
+        var ctx   = wheel.getContext("2d");
+        var copyCtx = document.getElementById('copy').getContext("2d");
+        ctx.clearRect(0, 0, wheel.width, wheel.height);
+        copyCtx.clearRect(0, 0, wheel.width, wheel.height);
+
+        ctx.drawImage(img, 0, 0, canvasRadius * 2, canvasRadius * 2);
+
+        for (var i = 0; i < resolution; i++) {
+          var pixels = [];
+          for (var pixel = 0; pixel < pixelCount; pixel++) {
+            var angle = (i / resolution) * 2 * Math.PI;
+            var x = Math.cos(angle) * circleRadi[pixel] + canvasRadius;
+            var y = Math.sin(angle) * circleRadi[pixel] + canvasRadius;
+
+            var imageData = ctx.getImageData(x, y, 1, 1).data;
+
+            copyCtx.fillStyle = 'rgb(' + imageData[0] + ', ' + imageData[1] + ', ' + imageData[2] + ')';
+            copyCtx.fillRect(x, y, 3, 3);
+
+            pixels[pixel] = [imageData[0], imageData[1], imageData[2]];
+          }
+          data[i] = pixels;
+        }
+
+        document.getElementById('c').value = generateC();
+      }
+
+      function generateC() {
+        var c = 'PROGMEM prog_uchar data[] = {\n';
+
+        for (var i = 0; i < resolution; i++) {
+
+          for (var pixel = 0; pixel < pixelCount; pixel++) {
+            c = c + ' ' + data[i][pixel][0] + ',' + data[i][pixel][1] + ',' + data[i][pixel][2] + ','
+          }
+
+          c = c + '\n';
+        }
+
+        c = c + '};'
+        return c;
+      }
+
+      function loadImage(url) {
+        var img = document.createElement('img');
+        img.src = url;
+        img.addEventListener('load', function() {
+          scanImage(img);
+        });
+      }
+
+      var fileSelector = document.getElementById('fileSelector');
+      fileSelector.addEventListener('change', function(e) {
+        loadImage(window.URL.createObjectURL(fileSelector.files[0]));
+      });
+
+      // loadImage('arrow_go.png');
+
+    </script>
+  </body>
+</html>
