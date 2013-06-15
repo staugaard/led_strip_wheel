@@ -15,6 +15,7 @@ Adafruit_NeoPixel strips[numberOfStrips] = {
   Adafruit_NeoPixel(numberOfPixels, 5, NEO_GRB + NEO_KHZ800)
 };
 
+float brightness;
 byte stripIndex;
 byte pixelIndex;
 int topRowIndex;
@@ -56,9 +57,11 @@ void loop() {
   timeSinceTop = millis() - lastSpeedInterrupt;
 
   if (tooSlow()) {
+    brightness = sin((millis() % 2000) / 2000.0 * PI);
+
     for (stripIndex = 0; stripIndex < numberOfStrips; stripIndex = stripIndex + 1) {
       for (pixelIndex = 0; pixelIndex < numberOfPixels; pixelIndex = pixelIndex + 1) {
-        strips[stripIndex].setPixelColor(pixelIndex, 255, 0, 0);
+        strips[stripIndex].setPixelColor(pixelIndex, brightness * 255, 0, 0);
       }
       strips[stripIndex].show();
     }
