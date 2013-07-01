@@ -1,0 +1,11 @@
+html, body {
+  background-color: #DDD;
+}
+
+canvas {
+  background-color: #000;
+}
+
+canvas.source {
+  display: none;
+}
