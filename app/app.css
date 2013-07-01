@@ -9,3 +9,10 @@ canvas {
 canvas.source {
   display: none;
 }
+
+#log {
+  width: 500px;
+  height: 86px;
+  margin: 0;
+  padding: 0;
+}

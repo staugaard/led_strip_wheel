@@ -6,6 +6,18 @@ var deadRadius = 1/5;
 // Serial Connection
 
 var connection = {
+  connected: false,
+
+  init: function() {
+    connection.log = document.getElementById('log');
+    connection.refreshPorts();
+    document.querySelector('#port-selector a').addEventListener('click', connection.refreshPorts());
+    document.querySelector('#port-selector button').addEventListener('click', function() {
+      var select = document.querySelector('#port-selector select');
+      connection.connect(select.value);
+    });
+  },
+
   refreshPorts: function() {
     console.log('refresh');
 
@@ -23,12 +35,34 @@ var connection = {
         select.appendChild(option);
       });
     });
+  },
+
+  connect: function(portName) {
+    chrome.serial.open(portName, {bitrate: 115200}, function(openInfo) {
+      connection.id = openInfo.connectionId;
+      connection.connected = true;
+      connection._read();
+    });
+  },
+
+  _read: function() {
+    if (!connection.connected) {
+      return;
+    }
+
+    chrome.serial.read(connection.id, 10, function(readInfo) {
+      if (readInfo.bytesRead > 0) {
+        var s = String.fromCharCode.apply(null, new Uint8Array(readInfo.data));
+        connection.log.value += s;
+      }
+      connection._read();
+    });
   }
 };
 
-connection.refreshPorts();
+connection.init();
 
-document.querySelector('#port-selector a').addEventListener('click', connection.refreshPorts());
+
 
 
 // Image Scanning
