@@ -29,7 +29,8 @@ public:
   bool readBlock(int blockIndex, byte buffer[]);
   bool writeBlock(int blockIndex, byte buffer[]);
 
-  bool storeImage(int index);
+  void readImage(int index);
+  bool writeImage(int index);
 };
 
 #endif

@@ -42,7 +42,22 @@ bool Storage::writeBlock(int blockIndex, byte buffer[]) {
   return card.writeBlock((imageIndex * resolution) + blockIndex + 1, buffer);
 }
 
-bool Storage::storeImage(int index) {
+void Storage::readImage(int index) {
+  byte readBuffer[512];
+  char writeBuffer[bytesPerBlock];
+
+  for (int i = 0; i < resolution; i++) {
+    card.readBlock((index * resolution) + i + 1, readBuffer);
+
+    for (int j = 0; j < bytesPerBlock; j++) {
+      writeBuffer[j] = static_cast<char>(readBuffer[j]);
+    }
+
+    Serial.write(writeBuffer);
+  }
+}
+
+bool Storage::writeImage(int index) {
   char readBuffer[bytesPerBlock];
   byte writeBuffer[512];
 
@@ -62,5 +77,11 @@ bool Storage::storeImage(int index) {
       return false;
     }
   }
-  return true;
+
+  if (index >= imageCount()) {
+    metadata[0] = index + 1;
+    return writeMetadata();
+  } else {
+    return true;
+  }
 }

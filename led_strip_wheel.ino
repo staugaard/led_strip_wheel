@@ -44,8 +44,10 @@ void handleSerialCommand(String command) {
     }
   } else if(command == "info") {
     handleInfoCommand();
-  } else if(command.startsWith("image ")) {
-    store.storeImage(command.substring(6).toInt());
+  } else if(command.startsWith("read_image ")) {
+    store.readImage(command.substring(11).toInt());
+  } else if(command.startsWith("write_image ")) {
+    store.writeImage(command.substring(12).toInt());
   } else {
     Serial.println("Unknown command");
   }
