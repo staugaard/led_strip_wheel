@@ -1,106 +1,57 @@
-#include <Adafruit_NeoPixel.h>
-#include <avr/pgmspace.h>
-#include "data.h"
+#include <SdFat.h>
+#include "storage.h"
 
-const byte numberOfStrips = 4;
-const byte numberOfPixels = 15;
-const int resolution      = 256;
-const int topRowOffset    = (resolution * -0.1);
-const int maxTime         = 700;
+const int resolution     = 256;
+const int ledsPerStrip   = 36;
+const int stripsPerWheel = 4;
 
-Adafruit_NeoPixel strips[numberOfStrips] = {
-  Adafruit_NeoPixel(numberOfPixels, 8, NEO_GRB + NEO_KHZ800),
-  Adafruit_NeoPixel(numberOfPixels, 7, NEO_GRB + NEO_KHZ800),
-  Adafruit_NeoPixel(numberOfPixels, 6, NEO_GRB + NEO_KHZ800),
-  Adafruit_NeoPixel(numberOfPixels, 5, NEO_GRB + NEO_KHZ800)
-};
-
-float brightness;
-byte stripIndex;
-byte pixelIndex;
-int topRowIndex;
-int rowIndex;
-byte frameNumber;
-prog_uchar *rowOffset;
-
-uint8_t r;
-uint8_t g;
-uint8_t b;
-
-volatile unsigned long lastSpeedInterrupt;
-volatile unsigned int millisPerRound = 1000;
-
-unsigned int timeSinceTop;
-float position;
-int stripPosition;
+Storage store = Storage(resolution, ledsPerStrip, stripsPerWheel);
+String serialBuffer = "";
 
 void setup() {
-  lastSpeedInterrupt = millis();
+  Serial.begin(115200);
+  while(!Serial) {}
+  serialBuffer.reserve(200);
 
-  for (stripIndex = 0; stripIndex < numberOfStrips; stripIndex = stripIndex + 1) {
-    strips[stripIndex].begin();
-    strips[stripIndex].show();
+  if (!store.init()) {
+    Serial.println("card.init failed");
   }
 
-  digitalWrite(2, HIGH); // this enables the pull-up resistor
-  attachInterrupt(0, positionSensorInterrupt, RISING);
-
-//  Serial.begin(9600);
-}
-
-void positionSensorInterrupt() {
-  millisPerRound = millis() - lastSpeedInterrupt;
-  lastSpeedInterrupt = millis();
+  handleInfoCommand();
 }
 
 void loop() {
-  timeSinceTop = millis() - lastSpeedInterrupt;
-
-  if (tooSlow()) {
-    brightness = sin((millis() % 2000) / 2000.0 * PI);
-
-    for (stripIndex = 0; stripIndex < numberOfStrips; stripIndex = stripIndex + 1) {
-      for (pixelIndex = 0; pixelIndex < numberOfPixels; pixelIndex = pixelIndex + 1) {
-        strips[stripIndex].setPixelColor(pixelIndex, brightness * 255, 0, 0);
-      }
-      strips[stripIndex].show();
-    }
-
-    return;
-  }
-
-  position = (timeSinceTop / (float) millisPerRound);
-
-  topRowIndex = (int) (position * resolution);
-  topRowIndex += topRowOffset;
-  if (topRowIndex < 0) {
-    topRowIndex = resolution - topRowIndex;
-  } else if (topRowIndex >= resolution) {
-    topRowIndex -= resolution;
-  }
-
-  frameNumber = (millis() / 1000) % numberOfFrames;
-
-  for (stripIndex = 0; stripIndex < numberOfStrips; stripIndex = stripIndex + 1) {
-    stripPosition = topRowIndex + (stripIndex * (resolution / numberOfStrips));
-    rowIndex = stripPosition % resolution;
-    if (rowIndex < 0) {
-      rowIndex = resolution - rowIndex;
-    }
-
-    rowOffset = frames[frameNumber] + (numberOfPixels * 3 * rowIndex);
-
-    for (pixelIndex = 0; pixelIndex < numberOfPixels; pixelIndex = pixelIndex + 1) {
-      r = pgm_read_byte_near(rowOffset + (pixelIndex * 3));
-      g = pgm_read_byte_near(rowOffset + (pixelIndex * 3) + 1);
-      b = pgm_read_byte_near(rowOffset + (pixelIndex * 3) + 2);
-      strips[stripIndex].setPixelColor(pixelIndex, r, g, b);
-    }
-    strips[stripIndex].show();
-  }
-
+  if(Serial.available()) { serialEvent(); }
 }
 
-bool tooSlow() {
-  return millisPerRound > maxTime || timeSinceTop > maxTime;
+void serialEvent() {
+  while (Serial.available()) {
+    char inChar = (char) Serial.read();
+
+    if (inChar == '\n') {
+      handleSerialCommand(serialBuffer);
+      serialBuffer = "";
+    } else {
+      serialBuffer += inChar;
+    } 
+  }
 }
+
+void handleSerialCommand(String command) {
+  if(command == "clear") {
+    if(store.clear()) {
+      Serial.println("OK");
+    }
+  } else if(command == "info") {
+    handleInfoCommand();
+  } else if(command.startsWith("image ")) {
+    store.storeImage(command.substring(6).toInt());
+  } else {
+    Serial.println("Unknown command");
+  }
+}
+
+void handleInfoCommand() {
+  Serial.println("image_count: " + (String) store.imageCount());
+}
+

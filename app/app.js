@@ -50,7 +50,7 @@ var connection = {
       return;
     }
 
-    chrome.serial.read(connection.id, 10, function(readInfo) {
+    chrome.serial.read(connection.id, 1, function(readInfo) {
       if (readInfo.bytesRead > 0) {
         var s = String.fromCharCode.apply(null, new Uint8Array(readInfo.data));
         connection.log.value += s;
