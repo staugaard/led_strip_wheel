@@ -2,6 +2,7 @@
 #include <SdFat.h>
 
 Storage::Storage(int res, int leds, int strips) {
+  imageIndex = 0;
   resolution = res;
   ledsPerStrip = leds;
   stripsPerWheel = strips;
@@ -9,7 +10,7 @@ Storage::Storage(int res, int leds, int strips) {
 }
 
 bool Storage::init() {
-  if (card.init(SPI_HALF_SPEED, SS)) {
+  if (card.init(SPI_FULL_SPEED, SS)) {
     if (card.readBlock(0, metadata)) {
       return true;
     } else {
@@ -44,32 +45,25 @@ bool Storage::writeBlock(int blockIndex, byte buffer[]) {
 
 void Storage::readImage(int index) {
   byte readBuffer[512];
-  char writeBuffer[bytesPerBlock];
 
   for (int i = 0; i < resolution; i++) {
     card.readBlock((index * resolution) + i + 1, readBuffer);
 
     for (int j = 0; j < bytesPerBlock; j++) {
-      writeBuffer[j] = static_cast<char>(readBuffer[j]);
+      Serial.write(readBuffer[j]);
     }
-
-    Serial.write(writeBuffer);
   }
 }
 
 bool Storage::writeImage(int index) {
-  char readBuffer[bytesPerBlock];
   byte writeBuffer[512];
 
   for (int i = 0; i < resolution; i++) {
-    int received = Serial.readBytes(readBuffer, bytesPerBlock);
-    if (received < bytesPerBlock) {
-      Serial.println("only received " + (String) received + " in block " + (String) i);
-      return false;
-    }
-
-    for (int j = 0; j < 512; j++) {
-      writeBuffer[j] = static_cast<byte>(readBuffer[j]);
+    for(int j = 0; j < bytesPerBlock; j++) {
+      while (!Serial.available()) {
+        delay(1);
+      }
+      writeBuffer[j] = (byte) Serial.read();
     }
 
     if (!card.writeBlock((index * resolution) + i + 1, writeBuffer)) {

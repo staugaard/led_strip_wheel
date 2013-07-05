@@ -7,6 +7,7 @@ var deadRadius = 1/5;
 
 var connection = {
   connected: false,
+  read: true,
 
   init: function() {
     connection.log = document.getElementById('log');
@@ -45,8 +46,97 @@ var connection = {
     });
   },
 
+  sendCommand: function(command) {
+    return connection.sendDataString(command + "\n");
+  },
+
+  sendDataString: function(data) {
+    var buffer = new ArrayBuffer(data.length);
+    var uint8View = new Uint8Array(buffer);
+
+    for (var i = 0; i < data.length; i++) {
+      uint8View[i] = data.charCodeAt(i);
+    }
+
+    connection.sendDataBuffer(buffer);
+  },
+
+  sendDataBuffer: function(buffer, offset) {
+    offset = offset || 0;
+
+    chrome.serial.write(connection.id, buffer.slice(offset), function(writeInfo) {
+      console.log(writeInfo);
+      if (writeInfo.bytesWritten > 0) {
+        offset = offset + writeInfo.bytesWritten;
+      }
+
+      if (offset < buffer.byteLength) {
+        connection.sendDataBuffer(buffer, offset);
+      }
+    });
+  },
+
+  info: function() {
+    if (connection.connected) {
+      connection.sendCommand('info');
+    }
+  },
+
+  writeImage: function(index, dataBuffer) {
+    if (!connection.connected) {
+      return;
+    }
+
+    connection.sendCommand('write_image ' + index);
+    connection.sendDataBuffer(dataBuffer);
+  },
+
+  readImage: function(index, callback) {
+    connection.read = false;
+
+    connection.sendCommand('read_image ' + index);
+
+    var bytesPerBlock = pixelCount * 4 * 3;
+    var expectedLength = bytesPerBlock * resolution;
+
+    connection._readData(expectedLength, function(data) {
+      connection.read = true;
+      if (callback) {
+        callback(data);
+      } else {
+        console.log(data);
+      }
+    });
+
+  },
+
+  _readData: function(length, callback, buffer) {
+    buffer = buffer || [];
+
+    chrome.serial.read(connection.id, Math.min(1024, length - buffer.length), function(readInfo) {
+      var view = new Uint8Array(readInfo.data);
+
+      for (var i = 0; i < view.length; i++) {
+        buffer.push(view[i]);
+      }
+
+      console.log(readInfo.bytesRead, view.length, buffer.length, length);
+
+      if (buffer.length == length) {
+        callback(buffer);
+      } else {
+        connection._readData(length, callback, buffer);
+      }
+    });
+  },
+
   _read: function() {
     if (!connection.connected) {
+      return;
+    }
+
+    if (!connection.read) {
+      setTimeout(connection._read, 500);
       return;
     }
 
@@ -54,8 +144,10 @@ var connection = {
       if (readInfo.bytesRead > 0) {
         var s = String.fromCharCode.apply(null, new Uint8Array(readInfo.data));
         connection.log.value += s;
+        connection._read();
+      } else {
+        setTimeout(connection._read, 500);
       }
-      connection._read();
     });
   }
 };
@@ -100,42 +192,73 @@ var imageScanner = {
     });
   },
 
+  _angleForStep: function(step) {
+    return (step / resolution) * 2 * Math.PI;
+  },
+
+  _sourceCoordinates: function(step, pixel) {
+    var angle = imageScanner._angleForStep(step);
+
+    return {
+      x: Math.cos(angle) * imageScanner.sourceRadi[pixel] + imageScanner.sourceRadius,
+      y: Math.sin(angle) * imageScanner.sourceRadi[pixel] + imageScanner.sourceRadius
+    }
+  },
+
+  _previewCoordinates: function(step, pixel) {
+    var angle = imageScanner._angleForStep(step);
+
+    return {
+      x: Math.cos(angle) * imageScanner.previewRadi[pixel] + imageScanner.previewRadius,
+      y: Math.sin(angle) * imageScanner.previewRadi[pixel] + imageScanner.previewRadius,
+      angle: angle
+    }
+  },
+
+  _colorAtCoordinates: function(x, y) {
+    return imageScanner.sourceContext.getImageData(x, y, 1, 1).data;
+  },
+
+  _colorAtPixel: function(step, pixel) {
+    var coordinates  = imageScanner._sourceCoordinates(step, pixel);
+    var imageData    = imageScanner.sourceContext.getImageData(coordinates.x, coordinates.y, 1, 1).data;
+
+    return {
+      x: coordinates.x,
+      y: coordinates.y,
+      angle: coordinates.angle,
+      r: imageData[0],
+      g: imageData[1],
+      b: imageData[2]
+    }
+  },
+
+  _scanImage: function(callback) {
+    for (var step = 0; step < resolution; step++) {
+      for (var pixel = 0; pixel < pixelCount; pixel++) {
+        callback(step, pixel, imageScanner._colorAtPixel(step, pixel))
+      }
+    }
+  },
+
   scanImage: function(img) {
     imageScanner.data = [];
-    imageScanner.data.bytes = '';
 
     imageScanner.optimizedData = null;
-    imageScanner.bytes = [];
     imageScanner.sourceContext.clearRect(0, 0, imageScanner.sourceWidth, imageScanner.sourceWidth);
     imageScanner.previewContext.clearRect(0, 0, imageScanner.previewWidth, imageScanner.previewWidth);
 
     imageScanner.sourceContext.drawImage(img, 0, 0, imageScanner.sourceWidth, imageScanner.sourceWidth);
 
-    for (var i = 0; i < resolution; i++) {
-      var pixels = [];
-      pixels.bytes = '';
+    imageScanner._scanImage(function(step, pixel, data) {
+      var previewCoordinates = imageScanner._previewCoordinates(step, pixel);
 
-      for (var pixel = 0; pixel < pixelCount; pixel++) {
-        var angle = (i / resolution) * 2 * Math.PI;
+      imageScanner.previewContext.fillStyle = 'rgb(' + data.r + ', ' + data.g + ', ' + data.b + ')';
+      imageScanner.previewContext.fillRect(previewCoordinates.x, previewCoordinates.y, 3, 3);
 
-        var sourceX = Math.cos(angle) * imageScanner.sourceRadi[pixel] + imageScanner.sourceRadius;
-        var sourceY = Math.sin(angle) * imageScanner.sourceRadi[pixel] + imageScanner.sourceRadius;
-
-        var previewX = Math.cos(angle) * imageScanner.previewRadi[pixel] + imageScanner.previewRadius;
-        var previewY = Math.sin(angle) * imageScanner.previewRadi[pixel] + imageScanner.previewRadius;
-
-        var imageData = imageScanner.sourceContext.getImageData(sourceX, sourceY, 1, 1).data;
-
-        imageScanner.previewContext.fillStyle = 'rgb(' + imageData[0] + ', ' + imageData[1] + ', ' + imageData[2] + ')';
-        imageScanner.previewContext.fillRect(previewX, previewY, 3, 3);
-
-        pixels[pixel] = [imageData[0], imageData[1], imageData[2]];
-        pixels[pixel].bytes = String.fromCharCode(imageData[0]) + String.fromCharCode(imageData[1]) + String.fromCharCode(imageData[2]);
-        pixels.bytes = pixels.bytes + pixels[pixel].bytes;
-      }
-      imageScanner.data[i] = pixels;
-      imageScanner.data.bytes = imageScanner.data.bytes + pixels.bytes;
-    }
+      imageScanner.data[step] = imageScanner.data[step] || [];
+      imageScanner.data[step].push([data.r, data.g, data.b])
+    });
 
     imageScanner.optimizeData();
 
@@ -150,21 +273,80 @@ var imageScanner = {
   },
 
   optimizeData: function() {
-    imageScanner.optimizedData = [];
-    imageScanner.optimizedData.bytes = '';
+    imageScanner.optimizedData = {};
+
+    var bytesPerStrip = pixelCount * 3;
+    var bytesPerBlock = 4 * bytesPerStrip;
+
+    imageScanner.optimizedData.buffer = new ArrayBuffer(resolution * bytesPerBlock);
+    var view = imageScanner.optimizedData.view = new Uint8Array(imageScanner.optimizedData.buffer);
+
     var stepsBetweenStrips = resolution / 4;
-    for (var i = 0; i < resolution; i++) {
-      var strip1 = imageScanner.data[stepsBetweenStrips * 0 + i];
-      var strip2 = imageScanner.data[stepsBetweenStrips * 0 + i];
-      var strip3 = imageScanner.data[stepsBetweenStrips * 0 + i];
-      var strip4 = imageScanner.data[stepsBetweenStrips * 0 + i];
 
-      imageScanner.optimizedData[i] = [strip1, strip2, strip3, strip4];
-      imageScanner.optimizedData[i].bytes = strip1.bytes + strip2.bytes + strip3.bytes + strip4.bytes;
-      imageScanner.optimizedData.bytes = imageScanner.optimizedData.bytes + imageScanner.optimizedData[i].bytes;
+    var strips = [];
+    var stepIndex;
+    var pixelOffset;
+
+    for (var step = 0; step < resolution; step++) {
+
+      for (var strip = 0; strip < 4; strip++) {
+        stepIndex = step + (strip * stepsBetweenStrips);
+        if (stepIndex >= resolution) { stepIndex = stepIndex - resolution; }
+
+        for (var pixel = 0; pixel < pixelCount; pixel++) {
+          pixelOffset = (step * bytesPerBlock) + (strip * bytesPerStrip) + (pixel * 3);
+          view[pixelOffset + 0] = imageScanner.data[stepIndex][pixel][0];
+          view[pixelOffset + 1] = imageScanner.data[stepIndex][pixel][1];
+          view[pixelOffset + 2] = imageScanner.data[stepIndex][pixel][2];
+        }
+
+      }
+
     }
-  }
+  },
 
+  verifyOptimizedData: function(data) {
+    var bytesPerStrip      = pixelCount * 3;
+    var bytesPerBlock      = 4 * bytesPerStrip;
+    var stepsBetweenStrips = resolution / 4;
+    var stepIndex;
+    var pixelIndex;
+    var color;
+
+    if (data.length != (resolution * bytesPerBlock)) {
+      console.log('data has wrong length');
+      return false;
+    }
+
+    for (var step = 0; step < resolution; step++) {
+      for (var strip = 0; strip < 4; strip++) {
+        stepIndex = step + (strip * stepsBetweenStrips);
+        if (stepIndex >= resolution) { stepIndex = stepIndex - resolution; }
+
+        for (var pixel = 0; pixel < pixelCount; pixel++) {
+          pixelIndex = step * bytesPerBlock + strip * bytesPerStrip + pixel * 3;
+          color = imageScanner._colorAtPixel(stepIndex, pixel);
+
+          if (data[pixelIndex] != color.r) {
+            console.log('red is wrong');
+            return false;
+          }
+
+          if (data[pixelIndex + 1] != color.g) {
+            console.log('red is wrong');
+            return false;
+          }
+
+          if (data[pixelIndex + 2] != color.b) {
+            console.log('red is wrong');
+            return false;
+          }
+        }
+      }
+    }
+
+    return true;
+  }
 };
 
 imageScanner.init();
