@@ -6,12 +6,26 @@ canvas {
   background-color: #000;
 }
 
+div#image-scanner {
+  float: left;
+  width: 500px;
+}
+
+div#image-scanner input {
+  height: 20px;
+}
+
+div#thumbnails {
+  float: right;
+  margin-top: 20px;
+}
+
 canvas.source {
   display: none;
 }
 
 #log {
-  width: 500px;
+  width: 620px;
   height: 86px;
   margin: 0;
   padding: 0;
