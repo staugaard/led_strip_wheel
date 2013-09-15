@@ -1,27 +1,52 @@
 #include <SdFat.h>
 #include "storage.h"
+#include <Adafruit_NeoPixel.h>
 
 const int resolution     = 256;
-const int ledsPerStrip   = 36;
+const int ledsPerStrip   = 35;
 const int stripsPerWheel = 4;
+
+Adafruit_NeoPixel strips[stripsPerWheel] = {
+  Adafruit_NeoPixel(ledsPerStrip, 23, NEO_GRB + NEO_KHZ800),
+  Adafruit_NeoPixel(ledsPerStrip, 20, NEO_GRB + NEO_KHZ800),
+  Adafruit_NeoPixel(ledsPerStrip, 17, NEO_GRB + NEO_KHZ800),
+  Adafruit_NeoPixel(ledsPerStrip, 14, NEO_GRB + NEO_KHZ800)
+};
 
 Storage store = Storage(resolution, ledsPerStrip, stripsPerWheel);
 String serialBuffer = "";
 byte data[512];
 int position = 0;
-int stripIndex;
+
+byte stripIndex;
+int stripOffset;
+byte pixelIndex;
+int pixelOffset;
+byte r;
+byte g;
+byte b;
+
+unsigned long time;
 
 void setup() {
   Serial.begin(115200);
   Serial.setTimeout(5000);
-  while(!Serial) {}
+//  while(!Serial) {}
   serialBuffer.reserve(200);
+
+  for (stripIndex = 0; stripIndex < stripsPerWheel; stripIndex = stripIndex + 1) {
+    strips[stripIndex].begin();
+    strips[stripIndex].show();
+  }
 
   if (!store.init()) {
     Serial.println("card.init failed");
   }
 
+  store.setImageIndex(3);
+
   handleInfoCommand();
+  time = millis();
 }
 
 void loop() {
@@ -29,12 +54,14 @@ void loop() {
 
   position++;
   if (position >= resolution) {
+    Serial.println(resolution * 1000000 / (millis() - time));
     position = 0;
+    time = millis();
   }
 
-//  store.readBlock(0, data);
+  store.readBlock(position, data);
 //  Serial.println(data[0]);
-//  updateLEDS();
+  updateLEDS();
 }
 
 void serialEvent() {
@@ -73,6 +100,14 @@ void handleInfoCommand() {
 
 void updateLEDS() {
   for (stripIndex = 0; stripIndex < stripsPerWheel; stripIndex++) {
-    
+    stripOffset = stripIndex * ledsPerStrip * 3;
+    for (pixelIndex = 0; pixelIndex < ledsPerStrip; pixelIndex++) {
+      pixelOffset = stripOffset + (pixelIndex * 3);
+      r = data[pixelOffset];
+      g = data[pixelOffset + 1];
+      b = data[pixelOffset + 3];
+      strips[stripIndex].setPixelColor(pixelIndex, r, g, b);
+    }
+    strips[stripIndex].show();
   }
 }
