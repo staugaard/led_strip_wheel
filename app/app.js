@@ -239,7 +239,7 @@ var dataOptimizer = {
   optimizeData: function(compactData) {
     var optimizedData = {}
 
-    optimizedData.buffer = new ArrayBuffer(resolution * dataOptimizer.bytesPerBlock);
+    optimizedData.buffer = new ArrayBuffer(resolution * 512);
     var view = optimizedData.view = new Uint8Array(optimizedData.buffer);
 
     var stepsBetweenStrips = resolution / 4;
