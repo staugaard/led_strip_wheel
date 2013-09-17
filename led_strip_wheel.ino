@@ -17,6 +17,9 @@ Storage store = Storage(resolution, ledsPerStrip, stripsPerWheel);
 String serialBuffer = "";
 byte data[512];
 int position = 0;
+volatile unsigned long lastSpeedInterrupt;
+volatile unsigned int millisPerRound = 1000;
+unsigned int timeSinceTop;
 
 byte stripIndex;
 int stripOffset;
@@ -25,8 +28,6 @@ int pixelOffset;
 byte r;
 byte g;
 byte b;
-
-unsigned long time;
 
 void setup() {
   Serial.begin(115200);
@@ -46,21 +47,26 @@ void setup() {
   store.setImageIndex(3);
 
   handleInfoCommand();
-  time = millis();
+
+  lastSpeedInterrupt = millis();
+  pinMode(2, INPUT_PULLUP);
+  attachInterrupt(2, positionSensorInterrupt, FALLING);
+}
+
+void positionSensorInterrupt() {
+  millisPerRound = millis() - lastSpeedInterrupt;
+  lastSpeedInterrupt = millis();
 }
 
 void loop() {
   if(Serial.available()) { serialEvent(); }
 
-  position++;
-  if (position >= resolution) {
-    Serial.println(resolution * 1000000 / (millis() - time));
-    position = 0;
-    time = millis();
-  }
+  timeSinceTop = millis() - lastSpeedInterrupt;
+//  Serial.println(timeSinceTop);
+  position = (timeSinceTop / (float) millisPerRound) * resolution;
+  position = position % resolution;
 
   store.readBlock(position, data);
-//  Serial.println(data[0]);
   updateLEDS();
 }
 
@@ -73,7 +79,7 @@ void serialEvent() {
       serialBuffer = "";
     } else {
       serialBuffer += inChar;
-    } 
+    }
   }
 }
 
@@ -105,7 +111,7 @@ void updateLEDS() {
       pixelOffset = stripOffset + (pixelIndex * 3);
       r = data[pixelOffset];
       g = data[pixelOffset + 1];
-      b = data[pixelOffset + 3];
+      b = data[pixelOffset + 2];
       strips[stripIndex].setPixelColor(pixelIndex, r, g, b);
     }
     strips[stripIndex].show();
