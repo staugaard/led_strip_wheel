@@ -121,16 +121,16 @@ var connection = {
       return;
     }
 
-    console.log('getting image ' + offset);
-    connection.readImage(offset, function(optimizedData, index) {
-      console.log('got image ' + index);
+    // console.log('getting image ' + offset);
+    // connection.readImage(offset, function(optimizedData, index) {
+    //   console.log('got image ' + index);
 
-      var compactedData = dataOptimizer.compactData(optimizedData);
-      var thumbnail = thumbnails.create(compactedData);
-      thumbnails.add(thumbnail);
+    //   var compactedData = dataOptimizer.compactData(optimizedData);
+    //   var thumbnail = thumbnails.create(compactedData);
+    //   thumbnails.add(thumbnail);
 
-      connection.readImages(count, offset + 1);
-    });
+    //   connection.readImages(count, offset + 1);
+    // });
   },
 
   _readData: function(length, callback, buffer) {
@@ -255,7 +255,7 @@ var dataOptimizer = {
         if (stepIndex >= resolution) { stepIndex = stepIndex - resolution; }
 
         for (var pixel = 0; pixel < pixelCount; pixel++) {
-          pixelOffset = (step * dataOptimizer.bytesPerBlock) + (strip * dataOptimizer.bytesPerStrip) + (pixel * 3);
+          pixelOffset = (step * 512) + (strip * dataOptimizer.bytesPerStrip) + (pixel * 3);
           view[pixelOffset + 0] = compactData[stepIndex][pixel][0];
           view[pixelOffset + 1] = compactData[stepIndex][pixel][1];
           view[pixelOffset + 2] = compactData[stepIndex][pixel][2];
@@ -366,6 +366,27 @@ var thumbnails = {
 
 thumbnails.init();
 
+// File Writing
+
+var fileWriter = {
+  writeFile: function(image_buffer_views) {
+    var metadataBuffer = new ArrayBuffer(512);
+    var metadata = new Uint8Array(metadataBuffer);
+    metadata[0] = image_buffer_views.length;
+
+    image_buffer_views.unshift(metadata);
+
+    var blob = new Blob(image_buffer_views, {type: 'application/octet-stream'});
+    var a = document.createElement('a');
+    a.download = 'test.bin';
+    a.href = URL.createObjectURL(blob);
+    a.textContent = 'Click here to download!';
+    a.dataset.downloadurl = ['bin', a.download, a.href].join(':');
+    a.click();
+  }
+};
+
+
 // Image Scanning
 
 var imageScanner = {
@@ -450,6 +471,8 @@ var imageScanner = {
     imageRenderer.render(imageScanner.previewCanvas, imageScanner.data, 4);
 
     imageScanner.optimizedData = dataOptimizer.optimizeData(imageScanner.data);
+
+    fileWriter.writeFile([imageScanner.optimizedData.view]);
   },
 
   scanURL: function(url) {
