@@ -1,13 +1,18 @@
 <!DOCTYPE html>
-<html ng-app="bikeWheel">
+<html ng-app="bikeWheel" ng-csp>
   <head>
-    <link href="https://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" rel="stylesheet">
+    <meta charset="utf-8">
+    <link href="vendor/stylesheets/bootstrap.css" rel="stylesheet">
     <link rel="stylesheet" type="text/css" href="dist/app.css">
 
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
-    <script src="https://netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.0.8/angular.min.js"></script>
+    <script src="vendor/javascripts/jquery-2.0.3.js"></script>
+    <script src="vendor/javascripts/jquery.sortable.js"></script>
+    <script src="vendor/javascripts/angular.js"></script>
+
     <script src="dist/app.js"></script>
+
+    <script src="vendor/javascripts/htmlSortable.js"></script>
+
   </head>
   <body>
     <div id="container" ng-controller="ImageCtrl">
@@ -17,7 +22,7 @@
           <h1>Bike Light!</h1>
 
           <p>
-            Drag images onto the page to add images to you bike wheel.
+            Drag images onto the window to add images to you bike wheel.
           </p>
 
           <ul id="items" html-sortable="" ng-model="images">

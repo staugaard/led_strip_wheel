@@ -51,15 +51,27 @@ function DiskImageWriter(options) {
     imageBufferViews.unshift(metadata);
 
     var blob = new Blob(imageBufferViews, {type: 'application/octet-stream'});
-    var url = URL.createObjectURL(blob);
 
-    var a = document.createElement('a');
-    a.download = name + '.img';
-    a.href = url
-    a.textContent = 'Click here to download!';
-    a.dataset.downloadurl = ['img', a.download, a.href].join(':');
-    debugger
-    a.click();
+    if (chrome.fileSystem) {
+      chrome.fileSystem.chooseEntry({type: 'saveFile', suggestedName: name + '.img'}, function(writableFileEntry) {
+        writableFileEntry.createWriter(function(writer) {
+          writer.onwriteend = function(e) {
+            console.log('write complete');
+          };
+          writer.write(blob);
+        });
+      });
+    } else {
+      var url = URL.createObjectURL(blob);
+
+      var a = document.createElement('a');
+      a.download = name + '.img';
+      a.href = url
+      a.textContent = 'Click here to download!';
+      a.dataset.downloadurl = ['img', a.download, a.href].join(':');
+      a.click();
+    }
+
   }
 
 }

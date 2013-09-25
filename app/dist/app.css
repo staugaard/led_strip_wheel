@@ -1,14 +1,11 @@
 html, body {
   height: 100%;
-  /*background-color: #F1F1F1;*/ }
+  background-color: #EEEEEE; }
 
 #container {
   max-width: 870px;
   min-height: 100%;
-  padding: 15px 30px;
   margin: 0 auto; }
-  #container .jumbotron {
-    border-radius: 15px; }
 
 #items {
   margin: 0;
