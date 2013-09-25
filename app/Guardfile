@@ -1,0 +1,12 @@
+# A sample Guardfile
+# More info at https://github.com/guard/guard#readme
+
+require 'sass'
+
+guard 'sprockets', :destination => 'dist', :asset_paths => ['src/javascripts', 'vendor/javascripts', 'src/stylesheets', 'vendor/stylesheets'] do
+  watch(/src\/javascripts\/.*/) { '/src/javascripts/app.js' }
+  watch(/vendor\/javascripts\/.*/) { '/src/javascripts/app.js' }
+
+  watch(/src\/stylesheets\/.*/) { '/src/stylesheets/app.css' }
+  watch(/vendor\/stylesheets\/.*/) { '/src/stylesheets/app.css' }
+end

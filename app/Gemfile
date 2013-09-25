@@ -1,0 +1,7 @@
+source 'https://rubygems.org'
+
+gem 'sass'
+gem 'sprockets'
+gem 'rake'
+gem 'guard'
+gem 'guard-sprockets'

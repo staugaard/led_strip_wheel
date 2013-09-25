@@ -1,0 +1,15 @@
+require 'bundler/setup'
+
+require 'rake/sprocketstask'
+
+assets = Sprockets::Environment.new do |env|
+  env.append_path 'src'
+end
+
+ASSETS = ['app.js', 'app.css']
+
+task :assets do
+  ASSETS.each do |asset|
+    assets[asset].write_to "dist/#{asset}"
+  end
+end
