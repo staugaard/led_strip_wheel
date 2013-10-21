@@ -20,6 +20,7 @@ int position = 0;
 volatile unsigned long lastSpeedInterrupt;
 volatile unsigned int millisPerRound = 1000;
 unsigned int timeSinceTop;
+int numberOfImages;
 
 byte stripIndex;
 int stripOffset;
@@ -44,7 +45,7 @@ void setup() {
     Serial.println("card.init failed");
   }
 
-  store.setImageIndex(3);
+  numberOfImages = store.imageCount();
 
   handleInfoCommand();
 
@@ -60,6 +61,8 @@ void positionSensorInterrupt() {
 
 void loop() {
   if(Serial.available()) { serialEvent(); }
+
+  store.setImageIndex((millis() / 120) % numberOfImages);
 
   timeSinceTop = millis() - lastSpeedInterrupt;
 //  Serial.println(timeSinceTop);
