@@ -19,11 +19,13 @@
 
       <div class="jumbotron">
         <div class="container">
-          <h1>Bike Light!</h1>
+          <header>
+            <h1>Bike Light!</h1>
 
-          <p>
-            Drag images onto the window to add images to your bike wheel.
-          </p>
+            <p>
+              Drag images onto the window to add images to your bike wheel.
+            </p>
+          </header>
 
           <ul id="items" html-sortable="" ng-model="images">
             <li ng-repeat="image in images" class="done-{{image.done}}" title="{{image.name}}" data-id="{{image.id}}">
@@ -31,12 +33,12 @@
             </li>
           </ul>
 
-          <p class="text-center">
+          <footer class="text-center">
             <button type="button" class="btn btn-primary btn-lg" ng-click="writeDiskImage()">
               <span class="glyphicon glyphicon-download"></span>
               Download
             </button>
-          </p>
+          </footer>
 
         </div>
       </div>

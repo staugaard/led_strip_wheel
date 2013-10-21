@@ -3,10 +3,28 @@ html, body {
   background-color: #EEEEEE;
 }
 
+$header-height: 140px;
+$footer-height: 100px;
+
 #container {
   max-width: 870px;
   min-height: 100%;
   margin: 0 auto;
+
+  header {
+    position: absolute;
+    height: $header-height;
+    top: 0;
+    width: 100%;
+    padding: 30px;
+  }
+
+  footer {
+    height: $footer-height;
+    width: 100%;
+    bottom: 0;
+    position: absolute;
+  }
 }
 
 @import 'image_list';

@@ -1,10 +1,15 @@
 #items {
+  position: absolute;
+  top: $header-height;
+  bottom: $footer-height;
+  width: 100%;
   margin: 0;
   padding: 30px;
   float: left;
   width: 720px;
   min-height: 192px;
   margin: 20px 0;
+  overflow-y: scroll;
 
   li {
     list-style: none;
