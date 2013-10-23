@@ -125,24 +125,26 @@ function ImageScanner(options) {
     }
   };
 
-  function _colorAtPixel(context, step, pixel) {
+  function _colorAtPixel(imageData, step, pixel) {
     var coordinates  = _coordinates(step, pixel);
-    var imageData    = context.getImageData(coordinates.x, coordinates.y, 1, 1).data;
+
+    var offset = (Math.round(coordinates.y) * imageData.width + Math.round(coordinates.x)) * 4
 
     return {
       x: coordinates.x,
       y: coordinates.y,
       angle: coordinates.angle,
-      r: imageData[0],
-      g: imageData[1],
-      b: imageData[2]
+      r: imageData.data[offset],
+      g: imageData.data[offset + 1],
+      b: imageData.data[offset + 2]
     }
   };
 
   function _scanImage(context, callback) {
+    var imageData = context.getImageData(0, 0, width, width);
     for (var step = 0; step < resolution; step++) {
       for (var pixel = 0; pixel < pixelCount; pixel++) {
-        callback(step, pixel, _colorAtPixel(context, step, pixel))
+        callback(step, pixel, _colorAtPixel(imageData, step, pixel))
       }
     }
   };
