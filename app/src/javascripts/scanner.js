@@ -1,4 +1,5 @@
 //= require settings
+//= require gif_parser
 
 function ImageScanner(options) {
   var self = this;
@@ -116,9 +117,32 @@ function ImageScanner(options) {
     });
   };
 
+  self.scanGIF = function(file, callback) {
+    var reader = new FileReader();
+    reader.onloadend = function () {
+      var parser = new GifParser();
+      parser.parse(reader.result, function(frames) {
+        frames.forEach(function(frame) {
+          var canvas = document.createElement('canvas');
+          canvas.width = frame.data.width;
+          canvas.height = frame.data.height;
+          var context = canvas.getContext('2d');
+          context.putImageData(frame.data, 0, 0);
+          self.scanImage(canvas, callback, {delay: frame.delay});
+        })
+      })
+    }
+
+    reader.readAsBinaryString(file);
+  };
+
   self.scanFile = function(file, callback) {
-    var url = window.URL.createObjectURL(file);
-    self.scanURL(url, callback, {});
+    if (file.type == 'image/gif') {
+      self.scanGIF(file, callback);
+    } else {
+      var url = window.URL.createObjectURL(file);
+      self.scanURL(url, callback, {});
+    }
   };
 }
 

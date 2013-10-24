@@ -17,20 +17,20 @@ function ImageCtrl($scope) {
   $scope.addFile = function(file) {
     console.log(file);
 
-    var model = {
-      name: file.name,
-      done: false,
-      id: uniqueId()
-    };
-
-    $scope.images.push(model);
-    $scope.$apply();
-    items.sortable('reload');
-
     imageScanner.scanFile(file, function(imageData) {
       console.log(imageData);
+
+      var model = {
+        name: file.name,
+        done: false,
+        id: uniqueId()
+      };
+
       $.extend(model, imageData, {done: true});
+
+      $scope.images.push(model);
       $scope.$apply();
+      items.sortable('reload');
     });
   }
 
