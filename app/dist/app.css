@@ -6,50 +6,51 @@ html, body {
   max-width: 870px;
   min-height: 100%;
   margin: 0 auto; }
-  #container header {
+  #container header, #container #items, #container footer {
     position: absolute;
+    left: 0;
+    right: 0;
+    margin-left: 5%;
+    margin-right: 5%; }
+  #container header {
     height: 140px;
     top: 0;
-    width: 100%;
     padding: 30px; }
+    #container header h1 {
+      font-size: 42px; }
+    #container header p {
+      font-size: 20px; }
   #container footer {
     height: 100px;
-    width: 100%;
-    bottom: 0;
-    position: absolute; }
-
-#items {
-  position: absolute;
-  top: 140px;
-  bottom: 100px;
-  width: 100%;
-  margin: 0;
-  padding: 30px;
-  float: left;
-  width: 720px;
-  min-height: 192px;
-  margin: 20px 0;
-  overflow-y: scroll; }
-  #items li {
-    list-style: none;
-    background-color: #000;
-    width: 122px;
-    height: 122px;
-    margin: 5px;
-    padding: 5px;
+    bottom: 0; }
+  #container #items {
+    position: absolute;
+    top: 140px;
+    bottom: 100px;
     float: left;
-    border-radius: 50%;
-    color: #FFF;
-    font-size: 48px;
-    line-height: 100px;
-    text-align: center; }
-    #items li.sortable-placeholder {
-      border: 1px dashed #888;
-      background-color: transparent; }
-    #items li.done-true img {
-      display: inherit; }
-    #items li img {
-      display: none;
-      width: 100%;
-      height: 100%;
-      border-radius: 50%; }
+    min-height: 192px;
+    margin: 20px 0;
+    overflow-y: scroll; }
+    #container #items li {
+      list-style: none;
+      background-color: #000;
+      width: 122px;
+      height: 122px;
+      margin: 5px;
+      padding: 5px;
+      float: left;
+      border-radius: 50%;
+      color: #FFF;
+      font-size: 48px;
+      line-height: 100px;
+      text-align: center; }
+      #container #items li.sortable-placeholder {
+        border: 1px dashed #888;
+        background-color: transparent; }
+      #container #items li.done-true img {
+        display: inherit; }
+      #container #items li img {
+        display: none;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%; }

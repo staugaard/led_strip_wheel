@@ -17,31 +17,27 @@
   <body>
     <div id="container" ng-controller="ImageCtrl">
 
-      <div class="jumbotron">
-        <div class="container">
-          <header>
-            <h1>Bike Light!</h1>
+      <header>
+        <h1>Bike Light!</h1>
 
-            <p>
-              Drag images onto the window to add images to your bike wheel.
-            </p>
-          </header>
+        <p>
+          Drag images onto the window to add images to your bike wheel.
+        </p>
+      </header>
 
-          <ul id="items" html-sortable="" ng-model="images">
-            <li ng-repeat="image in images" class="done-{{image.done}}" title="{{image.name}}" data-id="{{image.id}}">
-              <img ng-src="{{image.url}}"/>
-            </li>
-          </ul>
+      <ul id="items" html-sortable="" ng-model="images">
+        <li ng-repeat="image in images" class="done-{{image.done}}" title="{{image.name}}" data-id="{{image.id}}">
+          <img ng-src="{{image.url}}"/>
+        </li>
+      </ul>
 
-          <footer class="text-center">
-            <button type="button" class="btn btn-primary btn-lg" ng-click="writeDiskImage()">
-              <span class="glyphicon glyphicon-download"></span>
-              Download
-            </button>
-          </footer>
+      <footer class="text-center">
+        <button type="button" class="btn btn-primary btn-lg" ng-click="writeDiskImage()">
+          <span class="glyphicon glyphicon-download"></span>
+          Download
+        </button>
+      </footer>
 
-        </div>
-      </div>
     </div>
   </body>
 </html>
