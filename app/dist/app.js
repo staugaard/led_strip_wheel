@@ -92,8 +92,15 @@ $(document).ready(function() {
   });
 
   $(document).on('drop', function(e) {
-    var $scope = angular.element('#items').scope();
-    $scope.addFiles(e.dataTransfer.files);
+    var mode = angular.element('#container').scope().mode;
+
+    if (mode == 'slide-show') {
+      var $scope = angular.element('#items').scope();
+      $scope.addFiles(e.dataTransfer.files);
+    } else {
+      console.log('make video!');
+    }
+
     e.preventDefault();
     return false;
   });
@@ -708,7 +715,25 @@ function uniqueId() {
 
 
 
-function ImageCtrl($scope) {
+function ModeCtrl($scope) {
+
+  $scope.mode = 'slide-show';
+
+  $scope.switchToSlideShow = function() {
+    $scope.mode = 'slide-show';
+  }
+
+  $scope.switchToVideo = function() {
+    $scope.mode = 'video';
+  }
+
+}
+;
+
+
+
+
+function SlideShowCtrl($scope) {
 
   $scope.images = [];
 

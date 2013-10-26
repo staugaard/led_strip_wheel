@@ -2,7 +2,7 @@
 //= require disk_image_writer
 //= require unique_id
 
-function ImageCtrl($scope) {
+function SlideShowCtrl($scope) {
 
   $scope.images = [];
 

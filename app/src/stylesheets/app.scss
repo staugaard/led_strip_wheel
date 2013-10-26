@@ -11,7 +11,7 @@ $footer-height: 100px;
   min-height: 100%;
   margin: 0 auto;
 
-  header, #items, footer {
+  header, section, footer {
     position: absolute;
     left: 0;
     right: 0;
@@ -26,11 +26,28 @@ $footer-height: 100px;
 
     h1 {
       font-size: 42px;
+      float: left;
+    }
+
+    .nav-pills {
+      float: right;
+    }
+
+    h1, .nav-pills {
+      margin-top: 20px;
     }
 
     p {
+      clear: both;
       font-size: 20px;
+      font-weight: 200;
     }
+  }
+
+  section {
+    top: $header-height;
+    bottom: 0;
+    margin: 20px 53px;
   }
 
   footer {
@@ -38,47 +55,62 @@ $footer-height: 100px;
     bottom: 0;
   }
 
-  #items {
-    position: absolute;
-    top: $header-height;
-    bottom: $footer-height;
-    // padding: 30px;
-    float: left;
-    min-height: 192px;
-    margin: 20px 0;
-    overflow-y: scroll;
+  #slide-show {
+    ul {
+      position: absolute;
+      top: 0;
+      bottom: $footer-height;
+      min-height: 192px;
+      overflow-y: scroll;
+      padding: 0;
 
-    li {
-      list-style: none;
-      background-color: #000;
-      width: 122px;
-      height: 122px;
-      margin: 5px;
-      padding: 5px;
-      float: left;
-      border-radius: 50%;
-      color: #FFF;
-      font-size: 48px;
-      line-height: 100px;
-      text-align: center;
+      li {
+        list-style: none;
+        background-color: #000;
+        width: 122px;
+        height: 122px;
+        margin: 5px;
+        padding: 5px;
+        float: left;
+        border-radius: 50%;
+        color: #FFF;
+        font-size: 48px;
+        line-height: 100px;
+        text-align: center;
 
-      &.sortable-placeholder {
-        border: 1px dashed #888;
-        background-color: transparent;
-      }
+        &.sortable-placeholder {
+          border: 1px dashed #888;
+          background-color: transparent;
+        }
 
-      &.done-true {
+        &.done-true {
+          img {
+            display: inherit;
+          }
+        }
+
         img {
-          display: inherit;
+          display: none;
+          width: 100%;
+          height: 100%;
+          border-radius: 50%;
         }
       }
 
-      img {
-        display: none;
-        width: 100%;
-        height: 100%;
-        border-radius: 50%;
-      }
+    }
+
+  }
+
+  #video {
+    button {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      margin: 15% auto;
+      right: 0;
+      left: 0;
+      width: 200px;
+      height: 59px;
     }
   }
 

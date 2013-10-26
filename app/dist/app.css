@@ -6,7 +6,7 @@ html, body {
   max-width: 870px;
   min-height: 100%;
   margin: 0 auto; }
-  #container header, #container #items, #container footer {
+  #container header, #container section, #container footer {
     position: absolute;
     left: 0;
     right: 0;
@@ -17,21 +17,31 @@ html, body {
     top: 0;
     padding: 30px; }
     #container header h1 {
-      font-size: 42px; }
+      font-size: 42px;
+      float: left; }
+    #container header .nav-pills {
+      float: right; }
+    #container header h1, #container header .nav-pills {
+      margin-top: 20px; }
     #container header p {
-      font-size: 20px; }
+      clear: both;
+      font-size: 20px;
+      font-weight: 200; }
+  #container section {
+    top: 140px;
+    bottom: 0;
+    margin: 20px 53px; }
   #container footer {
     height: 100px;
     bottom: 0; }
-  #container #items {
+  #container #slide-show ul {
     position: absolute;
-    top: 140px;
+    top: 0;
     bottom: 100px;
-    float: left;
     min-height: 192px;
-    margin: 20px 0;
-    overflow-y: scroll; }
-    #container #items li {
+    overflow-y: scroll;
+    padding: 0; }
+    #container #slide-show ul li {
       list-style: none;
       background-color: #000;
       width: 122px;
@@ -44,13 +54,22 @@ html, body {
       font-size: 48px;
       line-height: 100px;
       text-align: center; }
-      #container #items li.sortable-placeholder {
+      #container #slide-show ul li.sortable-placeholder {
         border: 1px dashed #888;
         background-color: transparent; }
-      #container #items li.done-true img {
+      #container #slide-show ul li.done-true img {
         display: inherit; }
-      #container #items li img {
+      #container #slide-show ul li img {
         display: none;
         width: 100%;
         height: 100%;
         border-radius: 50%; }
+  #container #video button {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    margin: 15% auto;
+    right: 0;
+    left: 0;
+    width: 200px;
+    height: 59px; }

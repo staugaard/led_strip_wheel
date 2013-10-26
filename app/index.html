@@ -15,28 +15,48 @@
 
   </head>
   <body>
-    <div id="container" ng-controller="ImageCtrl">
+
+
+    <div id="container" ng-controller="ModeCtrl">
 
       <header>
         <h1>Bike Light!</h1>
+
+        <ul class="nav nav-pills">
+          <li ng-class="{active: mode == 'slide-show'}">
+            <a href="#" ng-click="switchToSlideShow()">Slide Show</a>
+          </li>
+          <li ng-class="{active: mode == 'video'}">
+            <a href="#" ng-click="switchToVideo()">Video</a>
+          </li>
+        </ul>
 
         <p>
           Drag images onto the window to add images to your bike wheel.
         </p>
       </header>
 
-      <ul id="items" html-sortable="" ng-model="images">
-        <li ng-repeat="image in images" class="done-{{image.done}}" title="{{image.name}}" data-id="{{image.id}}">
-          <img ng-src="{{image.url}}"/>
-        </li>
-      </ul>
+      <section id="slide-show" ng-controller="SlideShowCtrl" ng-show="mode == 'slide-show'">
+        <ul id="items" html-sortable="" ng-model="images">
+          <li ng-repeat="image in images" class="done-{{image.done}}" title="{{image.name}}" data-id="{{image.id}}">
+            <img ng-src="{{image.url}}"/>
+          </li>
+        </ul>
 
-      <footer class="text-center">
-        <button type="button" class="btn btn-primary btn-lg" ng-click="writeDiskImage()">
-          <span class="glyphicon glyphicon-download"></span>
-          Download
+        <footer class="text-center">
+          <button type="button" class="btn btn-primary btn-lg" ng-click="writeDiskImage()" ng-disabled="images.length == 0">
+            <span class="glyphicon glyphicon-download"></span>
+            Download
+          </button>
+        </footer>
+      </section>
+
+      <section id="video" ng-show="mode == 'video'">
+        <button type="button" class="btn btn-primary btn-lg">
+          <span class="glyphicon glyphicon-film"></span>
+          Select Video ...
         </button>
-      </footer>
+      </section>
 
     </div>
   </body>
