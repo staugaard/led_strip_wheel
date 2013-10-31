@@ -21,7 +21,7 @@ public:
   bool init();
   bool clear();
 
-  int imageCount();
+  long imageCount();
 
   int getImageIndex() { return imageIndex; }
   void setImageIndex(int i) { imageIndex = i; }

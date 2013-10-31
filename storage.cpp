@@ -31,8 +31,8 @@ bool Storage::clear() {
   return writeMetadata();
 }
 
-int Storage::imageCount() {
-  return (int) metadata[0];
+long Storage::imageCount() {
+  return (unsigned long)(metadata[3] << 24) | (metadata[2] << 16) | (metadata[1] << 8) | metadata[0];
 }
 
 bool Storage::readBlock(int blockIndex, byte buffer[]) {
