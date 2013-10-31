@@ -15,7 +15,7 @@ function ImageScanner(options) {
   }
 
   function _angleForStep(step) {
-    return (step / resolution) * 2 * Math.PI;
+    return (-step / resolution) * 2 * Math.PI;
   };
 
   function _coordinates(step, pixel) {
@@ -68,7 +68,7 @@ function ImageScanner(options) {
     var angle, angleSin, angleCos, x, y, stepData, pixelData;
     for (var step = 0; step < resolution; step++) {
       stepData = data[step];
-      angle = (step / resolution) * 2 * Math.PI;
+      angle = _angleForStep(step);
       angleSin = Math.sin(angle);
       angleCos = Math.cos(angle);
 
