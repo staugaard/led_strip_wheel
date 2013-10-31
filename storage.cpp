@@ -32,7 +32,7 @@ bool Storage::clear() {
 }
 
 long Storage::imageCount() {
-  return (unsigned long)(metadata[3] << 24) | (metadata[2] << 16) | (metadata[1] << 8) | metadata[0];
+  return (unsigned long)(metadata[0] << 24) | (metadata[1] << 16) | (metadata[2] << 8) | metadata[3];
 }
 
 bool Storage::readBlock(int blockIndex, byte buffer[]) {
@@ -43,7 +43,7 @@ bool Storage::writeBlock(int blockIndex, byte buffer[]) {
   return card.writeBlock((imageIndex * resolution) + blockIndex + 1, buffer);
 }
 
-void Storage::readImage(int index) {
+void Storage::readImage(long index) {
   byte readBuffer[512];
 
   for (int i = 0; i < resolution; i++) {
@@ -55,7 +55,7 @@ void Storage::readImage(int index) {
   }
 }
 
-bool Storage::writeImage(int index) {
+bool Storage::writeImage(long index) {
   byte writeBuffer[512];
 
   for (int i = 0; i < resolution; i++) {

@@ -6,7 +6,7 @@
 class Storage
 {
 private:
-  int imageIndex;
+  long imageIndex;
   Sd2Card card;
   byte metadata[512];
   bool writeMetadata();
@@ -23,14 +23,14 @@ public:
 
   long imageCount();
 
-  int getImageIndex() { return imageIndex; }
-  void setImageIndex(int i) { imageIndex = i; }
+  long getImageIndex() { return imageIndex; }
+  void setImageIndex(long i) { imageIndex = i; }
 
   bool readBlock(int blockIndex, byte buffer[]);
   bool writeBlock(int blockIndex, byte buffer[]);
 
-  void readImage(int index);
-  bool writeImage(int index);
+  void readImage(long index);
+  bool writeImage(long index);
 };
 
 #endif

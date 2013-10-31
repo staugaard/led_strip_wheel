@@ -20,7 +20,7 @@ int position = 0;
 volatile unsigned long lastSpeedInterrupt;
 volatile unsigned int millisPerRound = 1000;
 unsigned int timeSinceTop;
-int numberOfImages;
+long numberOfImages;
 
 byte stripIndex;
 int stripOffset;
