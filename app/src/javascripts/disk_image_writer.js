@@ -56,7 +56,7 @@ function DiskImageWriter(options) {
       chrome.fileSystem.chooseEntry({type: 'saveFile', suggestedName: name + '.img'}, function(writableFileEntry) {
         writableFileEntry.createWriter(function(writer) {
           writer.onwriteend = function(e) {
-            console.log('write complete');
+            // console.log('write complete');
           };
           writer.write(blob);
         });
@@ -72,7 +72,45 @@ function DiskImageWriter(options) {
       a.click();
     }
 
-  }
+  };
+
+  self.writeFile = function(compactDatas, name) {
+    var index = 0;
+    self.writeImages(compactDatas.length, name, function(write) {
+      var data = compactDatas[index];
+      index++;
+      if (data) {
+        write(data);
+      }
+    });
+  };
+
+  self.writeImages = function(number, name, callback) {
+    var metadataBuffer = new ArrayBuffer(512);
+    var metadata = new Uint8Array(metadataBuffer);
+
+    var numberHighBits = number >> 8;
+    var numberLowBits  = number & 255;
+
+    metadata[0] = (number >> 24) & 255;
+    metadata[1] = (number >> 16) & 255;
+    metadata[2] = (number >> 8) & 255;
+    metadata[3] = number & 255;
+
+    chrome.fileSystem.chooseEntry({type: 'saveFile', suggestedName: name + '.img'}, function(writableFileEntry) {
+      writableFileEntry.createWriter(function(writer) {
+        writer.onwriteend = function(e) {
+          callback(function(compactData) {
+            var imageBufferView = self.optimizeData(compactData).view;
+            writer.write(new Blob([imageBufferView], {type: 'application/octet-stream'}));
+          })
+          // console.log('write complete');
+        };
+        writer.write(new Blob([metadata], {type: 'application/octet-stream'}));
+      });
+    });
+
+  };
 
 }
 

@@ -51,11 +51,12 @@
         </footer>
       </section>
 
-      <section id="video" ng-show="mode == 'video'">
-        <button type="button" class="btn btn-primary btn-lg">
+      <section id="video" ng-controller="VideoCtrl" ng-show="mode == 'video'">
+        <button type="button" class="btn btn-primary btn-lg" ng-click="pickVideoFile()" >
           <span class="glyphicon glyphicon-film"></span>
           Select Video ...
         </button>
+        <canvas></canvas>
       </section>
 
     </div>

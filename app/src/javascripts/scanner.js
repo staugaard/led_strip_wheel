@@ -85,14 +85,7 @@ function ImageScanner(options) {
     return canvas;
   };
 
-
-
-  self.scanImage = function(image, callback, extra) {
-    var canvas = document.createElement('canvas');
-    canvas.width = canvas.height = width;
-    var context = canvas.getContext('2d');
-    context.drawImage(image, 0, 0, width, width);
-
+  function _scanContext(context, callback, extra) {
     var imageData = [];
 
     _scanImage(context, function(step, pixel, pixelData) {
@@ -104,9 +97,67 @@ function ImageScanner(options) {
 
     callback($.extend(extra, {
       data: imageData,
-      srcUrl: canvas.toDataURL("image/png"),
+      // srcUrl: context.canvas.toDataURL("image/png"),
       url: _render(imageData, 112).toDataURL("image/png")
     }));
+  }
+
+  self.scanVideo = function(video, callback, extra) {
+    var canvas = (extra || {}).canvas;
+    if (!canvas) {
+      var canvas = document.createElement('canvas');
+    }
+    canvas.width = canvas.height = width;
+    var context = canvas.getContext('2d');
+
+    var drawX, drawY, drawW, drawH;
+
+    if (video.videoWidth > video.videoHeight) {
+      drawX = 0;
+      drawW = canvas.width;
+
+      drawH = video.videoHeight * canvas.width / video.videoWidth;
+      drawY = (canvas.height - drawH) / 2;
+    }
+
+    var first = true;
+    var scanning = true;
+
+    var next = function() {
+      if (first) {
+        first = false;
+        video.currentTime = 0;
+      } else if (scanning) {
+        video.currentTime += 0.1;
+      }
+    };
+
+    var seeked = function() {
+      // console.log('seeked');
+      context.drawImage(video, drawX, drawY, drawW, drawH);
+
+      _scanContext(context, callback, extra);
+
+    }
+
+    var ended = function() {
+      // console.log('ended');
+      scanning = false;
+    }
+
+    video.addEventListener('seeked', seeked);
+    video.addEventListener('ended',  ended);
+
+    return next;
+  };
+
+  self.scanImage = function(image, callback, extra) {
+    var canvas = document.createElement('canvas');
+    canvas.width = canvas.height = width;
+    var context = canvas.getContext('2d');
+    context.drawImage(image, 0, 0, width, width);
+
+    _scanContext(context, callback, extra);
   };
 
   self.scanURL = function(url, callback, extra) {

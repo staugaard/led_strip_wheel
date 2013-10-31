@@ -63,7 +63,7 @@ function DiskImageWriter(options) {
       chrome.fileSystem.chooseEntry({type: 'saveFile', suggestedName: name + '.img'}, function(writableFileEntry) {
         writableFileEntry.createWriter(function(writer) {
           writer.onwriteend = function(e) {
-            console.log('write complete');
+            // console.log('write complete');
           };
           writer.write(blob);
         });
@@ -79,7 +79,45 @@ function DiskImageWriter(options) {
       a.click();
     }
 
-  }
+  };
+
+  self.writeFile = function(compactDatas, name) {
+    var index = 0;
+    self.writeImages(compactDatas.length, name, function(write) {
+      var data = compactDatas[index];
+      index++;
+      if (data) {
+        write(data);
+      }
+    });
+  };
+
+  self.writeImages = function(number, name, callback) {
+    var metadataBuffer = new ArrayBuffer(512);
+    var metadata = new Uint8Array(metadataBuffer);
+
+    var numberHighBits = number >> 8;
+    var numberLowBits  = number & 255;
+
+    metadata[0] = (number >> 24) & 255;
+    metadata[1] = (number >> 16) & 255;
+    metadata[2] = (number >> 8) & 255;
+    metadata[3] = number & 255;
+
+    chrome.fileSystem.chooseEntry({type: 'saveFile', suggestedName: name + '.img'}, function(writableFileEntry) {
+      writableFileEntry.createWriter(function(writer) {
+        writer.onwriteend = function(e) {
+          callback(function(compactData) {
+            var imageBufferView = self.optimizeData(compactData).view;
+            writer.write(new Blob([imageBufferView], {type: 'application/octet-stream'}));
+          })
+          // console.log('write complete');
+        };
+        writer.write(new Blob([metadata], {type: 'application/octet-stream'}));
+      });
+    });
+
+  };
 
 }
 
@@ -643,14 +681,7 @@ function ImageScanner(options) {
     return canvas;
   };
 
-
-
-  self.scanImage = function(image, callback, extra) {
-    var canvas = document.createElement('canvas');
-    canvas.width = canvas.height = width;
-    var context = canvas.getContext('2d');
-    context.drawImage(image, 0, 0, width, width);
-
+  function _scanContext(context, callback, extra) {
     var imageData = [];
 
     _scanImage(context, function(step, pixel, pixelData) {
@@ -662,9 +693,67 @@ function ImageScanner(options) {
 
     callback($.extend(extra, {
       data: imageData,
-      srcUrl: canvas.toDataURL("image/png"),
+      // srcUrl: context.canvas.toDataURL("image/png"),
       url: _render(imageData, 112).toDataURL("image/png")
     }));
+  }
+
+  self.scanVideo = function(video, callback, extra) {
+    var canvas = (extra || {}).canvas;
+    if (!canvas) {
+      var canvas = document.createElement('canvas');
+    }
+    canvas.width = canvas.height = width;
+    var context = canvas.getContext('2d');
+
+    var drawX, drawY, drawW, drawH;
+
+    if (video.videoWidth > video.videoHeight) {
+      drawX = 0;
+      drawW = canvas.width;
+
+      drawH = video.videoHeight * canvas.width / video.videoWidth;
+      drawY = (canvas.height - drawH) / 2;
+    }
+
+    var first = true;
+    var scanning = true;
+
+    var next = function() {
+      if (first) {
+        first = false;
+        video.currentTime = 0;
+      } else if (scanning) {
+        video.currentTime += 0.1;
+      }
+    };
+
+    var seeked = function() {
+      // console.log('seeked');
+      context.drawImage(video, drawX, drawY, drawW, drawH);
+
+      _scanContext(context, callback, extra);
+
+    }
+
+    var ended = function() {
+      // console.log('ended');
+      scanning = false;
+    }
+
+    video.addEventListener('seeked', seeked);
+    video.addEventListener('ended',  ended);
+
+    return next;
+  };
+
+  self.scanImage = function(image, callback, extra) {
+    var canvas = document.createElement('canvas');
+    canvas.width = canvas.height = width;
+    var context = canvas.getContext('2d');
+    context.drawImage(image, 0, 0, width, width);
+
+    _scanContext(context, callback, extra);
   };
 
   self.scanURL = function(url, callback, extra) {
@@ -774,6 +863,43 @@ function SlideShowCtrl($scope) {
 
   $scope.writeDiskImage = function() {
     diskImageWriter.writeFile(dataArray(), 'bike_wheel');
+  }
+
+}
+;
+
+
+
+function VideoCtrl($scope) {
+
+  $scope.pickVideoFile = function() {
+    chrome.fileSystem.chooseEntry({type: 'openFile'}, function(fileEntry) {
+      fileEntry.file(function(file) {
+        var video = document.createElement('video');
+        video.addEventListener('canplaythrough', function(e) {
+          var frames = Math.floor(video.duration * 10);
+
+          var next, write;
+
+          var frameHandler = function(imageData) {
+            // console.log(imageData);
+            write(imageData.data);
+          };
+
+          next = imageScanner.scanVideo(video, frameHandler, {canvas: $('canvas')[0]});
+
+          diskImageWriter.writeImages(frames, 'video', function(writeFunc) {
+            write = writeFunc;
+            next()
+          });
+
+        });
+
+        video.src = URL.createObjectURL(file);
+        window.foo = video;
+        video.load();
+      });
+    });
   }
 
 }
