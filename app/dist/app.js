@@ -47,41 +47,6 @@ function DiskImageWriter(options) {
   };
 
   self.writeFile = function(compactDatas, name) {
-    var imageBufferViews = compactDatas.map(function(compactData) {
-      return self.optimizeData(compactData).view;
-    });
-
-    var metadataBuffer = new ArrayBuffer(512);
-    var metadata = new Uint8Array(metadataBuffer);
-    metadata[0] = imageBufferViews.length;
-
-    imageBufferViews.unshift(metadata);
-
-    var blob = new Blob(imageBufferViews, {type: 'application/octet-stream'});
-
-    if (chrome.fileSystem) {
-      chrome.fileSystem.chooseEntry({type: 'saveFile', suggestedName: name + '.img'}, function(writableFileEntry) {
-        writableFileEntry.createWriter(function(writer) {
-          writer.onwriteend = function(e) {
-            // console.log('write complete');
-          };
-          writer.write(blob);
-        });
-      });
-    } else {
-      var url = URL.createObjectURL(blob);
-
-      var a = document.createElement('a');
-      a.download = name + '.img';
-      a.href = url
-      a.textContent = 'Click here to download!';
-      a.dataset.downloadurl = ['img', a.download, a.href].join(':');
-      a.click();
-    }
-
-  };
-
-  self.writeFile = function(compactDatas, name) {
     var index = 0;
     self.writeImages(compactDatas.length, name, function(write) {
       var data = compactDatas[index];
