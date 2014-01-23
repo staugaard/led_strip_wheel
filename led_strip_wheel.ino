@@ -31,23 +31,17 @@ byte g;
 byte b;
 
 void setup() {
-  Serial.begin(115200);
-  Serial.setTimeout(5000);
-//  while(!Serial) {}
-  serialBuffer.reserve(200);
-
   for (stripIndex = 0; stripIndex < stripsPerWheel; stripIndex = stripIndex + 1) {
     strips[stripIndex].begin();
     strips[stripIndex].show();
   }
 
-  if (!store.init()) {
-    Serial.println("card.init failed");
+  while(!store.init()) {
+    showCalibration();
+    delay(1000);
   }
 
   numberOfImages = store.imageCount();
-
-  handleInfoCommand();
 
   lastSpeedInterrupt = millis();
   pinMode(2, INPUT_PULLUP);
@@ -60,51 +54,15 @@ void positionSensorInterrupt() {
 }
 
 void loop() {
-  if(Serial.available()) { serialEvent(); }
-
   store.setImageIndex((millis() / 120) % numberOfImages);
 
   timeSinceTop = millis() - lastSpeedInterrupt;
-//  Serial.println(timeSinceTop);
+
   position = (timeSinceTop / (float) millisPerRound) * resolution;
   position = position % resolution;
 
   store.readBlock(position, data);
   updateLEDS();
-}
-
-void serialEvent() {
-  while (Serial.available()) {
-    char inChar = (char) Serial.read();
-
-    if (inChar == '\n') {
-      handleSerialCommand(serialBuffer);
-      serialBuffer = "";
-    } else {
-      serialBuffer += inChar;
-    }
-  }
-}
-
-void handleSerialCommand(String command) {
-  if(command == "clear") {
-    if(store.clear()) {
-      Serial.println("OK");
-    }
-  } else if(command == "info") {
-    handleInfoCommand();
-  } else if(command.startsWith("read_image ")) {
-    store.readImage(command.substring(11).toInt());
-  } else if(command.startsWith("write_image ")) {
-    store.writeImage(command.substring(12).toInt());
-    Serial.println("OK");
-  } else {
-    Serial.println("Unknown command");
-  }
-}
-
-void handleInfoCommand() {
-  Serial.println("image_count: " + (String) store.imageCount());
 }
 
 void updateLEDS() {
@@ -119,4 +77,26 @@ void updateLEDS() {
     }
     strips[stripIndex].show();
   }
+}
+
+void showCalibration() {
+  strips[0].setPixelColor(0,                255, 0, 0);
+  strips[0].setPixelColor(ledsPerStrip - 1, 255, 0, 0);
+  strips[0].setPixelColor(ledsPerStrip - 2, 255, 0, 0);
+  strips[0].show();
+
+  strips[1].setPixelColor(0,                0, 255, 0);
+  strips[1].setPixelColor(ledsPerStrip - 1, 0, 255, 0);
+  strips[1].setPixelColor(ledsPerStrip - 2, 0, 255, 0);
+  strips[1].show();
+
+  strips[2].setPixelColor(0,                0, 0, 255);
+  strips[2].setPixelColor(ledsPerStrip - 1, 0, 0, 255);
+  strips[2].setPixelColor(ledsPerStrip - 2, 0, 0, 255);
+  strips[2].show();
+
+  strips[3].setPixelColor(0,                255, 255, 255);
+  strips[3].setPixelColor(ledsPerStrip - 1, 255, 255, 255);
+  strips[3].setPixelColor(ledsPerStrip - 2, 255, 255, 255);
+  strips[3].show();
 }
