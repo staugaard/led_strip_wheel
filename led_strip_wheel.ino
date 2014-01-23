@@ -3,7 +3,7 @@
 #include <Adafruit_NeoPixel.h>
 
 const int resolution     = 256;
-const int ledsPerStrip   = 35;
+const int ledsPerStrip   = 36;
 const int stripsPerWheel = 4;
 
 Adafruit_NeoPixel strips[stripsPerWheel] = {
