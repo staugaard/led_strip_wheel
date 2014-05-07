@@ -3,11 +3,15 @@
 
 function VideoCtrl($scope) {
 
+  $scope.progress = '0%';
+
   $scope.pickVideoFile = function() {
     chrome.fileSystem.chooseEntry({type: 'openFile'}, function(fileEntry) {
       fileEntry.file(function(file) {
         var handled = false;
         var video = document.createElement('video');
+        var frame = 0;
+
         video.addEventListener('canplaythrough', function(e) {
           if (handled) {return;}
           handled = true;
@@ -20,6 +24,9 @@ function VideoCtrl($scope) {
 
           var frameHandler = function(imageData) {
             // console.log(imageData);
+            frame++;
+            $scope.progress = '' + (frame * 100 / frames) + '%';
+            $scope.$apply();
             write(imageData.data);
           };
 

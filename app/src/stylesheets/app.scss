@@ -110,16 +110,23 @@ $footer-height: 100px;
   }
 
   #video {
-    button {
+    button, .progress {
       position: absolute;
       top: 0;
       bottom: 0;
-      margin: 10% auto;
+      margin: 5% auto;
       right: 0;
       left: 0;
+      z-index: 100;
+    }
+
+    button {
       width: 200px;
       height: 59px;
-      z-index: 100;
+    }
+
+    .progress {
+      width: 500px;
     }
 
     canvas {

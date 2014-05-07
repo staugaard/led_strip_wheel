@@ -55,10 +55,13 @@
       </section>
 
       <section id="video" ng-controller="VideoCtrl" ng-show="mode == 'video'">
-        <button type="button" class="btn btn-primary btn-lg" ng-click="pickVideoFile()" >
+        <button type="button" class="btn btn-primary btn-lg" ng-click="pickVideoFile()" ng-show="progress == '0%'">
           <span class="glyphicon glyphicon-film"></span>
           Select Video ...
         </button>
+        <div class="progress" ng-show="progress != '0%'">
+          <div class="progress-bar" role="progressbar" style="width: {{progress}};"></div>
+        </div>
         <canvas></canvas>
       </section>
 
