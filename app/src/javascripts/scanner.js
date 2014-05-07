@@ -3,81 +3,63 @@
 
 function ImageScanner(options) {
   var self = this;
-  var resolution = options.resolution;
   var width = options.width || 500;
   var radius = width / 2;
-  var deadRadius = radius * options.deadRadius;
-  var pixelCount = options.pixelCount;
+  var pixelConfig = options.pixelConfig;
 
-  var radi = [];
-  for (var pixel = 0; pixel < pixelCount; pixel++) {
-    radi[pixel]  = ((radius - deadRadius) / pixelCount) * pixel + deadRadius;
-  }
+  function _colorAtCoordinates(imageData, coordinates) {
+    var x = coordinates.x * radius + radius;
+    var y = coordinates.y * radius + radius;
 
-  function _angleForStep(step) {
-    return (-step / resolution) * 2 * Math.PI;
-  };
-
-  function _coordinates(step, pixel) {
-    var angle = _angleForStep(step);
-
-    return {
-      x: Math.cos(angle) * radi[pixel] + radius,
-      y: Math.sin(angle) * radi[pixel] + radius
-    }
-  };
-
-  function _colorAtPixel(imageData, step, pixel) {
-    var coordinates  = _coordinates(step, pixel);
-
-    var offset = (Math.round(coordinates.y) * imageData.width + Math.round(coordinates.x)) * 4
+    var offset = (Math.round(y) * imageData.width + Math.round(x)) * 4
 
     return {
       x: coordinates.x,
       y: coordinates.y,
-      angle: coordinates.angle,
       r: imageData.data[offset],
       g: imageData.data[offset + 1],
       b: imageData.data[offset + 2]
     }
-  };
+  }
 
   function _scanImage(context, callback) {
     var imageData = context.getImageData(0, 0, width, width);
-    for (var step = 0; step < resolution; step++) {
-      for (var pixel = 0; pixel < pixelCount; pixel++) {
-        callback(step, pixel, _colorAtPixel(imageData, step, pixel))
+
+    var stepIndex, step, stripIndex, strip, pixelIndex, pixel, pixelData;
+    for (stepIndex = 0; stepIndex < pixelConfig.length; stepIndex++) {
+      step = pixelConfig[stepIndex];
+
+      for (stripIndex = 0; stripIndex < step.length; stripIndex++) {
+        strip = step[stripIndex];
+
+        for (pixelIndex = 0; pixelIndex < strip.length; pixelIndex++) {
+          pixel = strip[pixelIndex];
+          pixelData = _colorAtCoordinates(imageData, pixel);
+          callback(stepIndex, stripIndex, pixelIndex, pixelData);
+        }
       }
     }
-  };
-
-
+  }
 
   function _render(data, width) {
     var canvas = document.createElement('canvas');
     canvas.width = canvas.height = width;
 
-    var context    = canvas.getContext('2d');
-    var radius     = width / 2;
-    var deadRadius = radius * options.deadRadius;
-    var radi       = [];
-    for (var pixel = 0; pixel < pixelCount; pixel++) {
-      radi[pixel]  = ((radius - deadRadius) / pixelCount) * pixel + deadRadius;
-    }
-    var pixelSize = 2;
-    var angle, angleSin, angleCos, x, y, stepData, pixelData;
-    for (var step = 0; step < resolution; step++) {
-      stepData = data[step];
-      angle = _angleForStep(step);
-      angleSin = Math.sin(angle);
-      angleCos = Math.cos(angle);
+    var context = canvas.getContext('2d');
+    context.translate(width / 2, width / 2);
+    context.scale(width / 2, width / 2);
+    var pixelSize = 3 / width;
+    var x, y, strip, strip;
 
-      for (var pixel = 0; pixel < pixelCount; pixel++) {
-        pixelData = stepData[pixel];
-        x = angleCos * radi[pixel] + radius;
-        y = angleSin * radi[pixel] + radius;
+    for (var stepIndex = 0; stepIndex < data.length; stepIndex++) {
+      var strip = data[stepIndex][0];
 
-        context.fillStyle = 'rgb(' + pixelData[0] + ', ' + pixelData[1] + ', ' + pixelData[2] + ')';
+      for (var pixelIndex = 0; pixelIndex < strip.length; pixelIndex++) {
+        pixelData = strip[pixelIndex];
+        x = pixelData.x;
+        y = pixelData.y;
+
+        context.fillStyle = 'rgb(' + pixelData.r + ', ' + pixelData.g + ', ' + pixelData.b + ')';
         context.fillRect(x, y, pixelSize, pixelSize);
       }
     }
@@ -88,9 +70,10 @@ function ImageScanner(options) {
   function _scanContext(context, callback, extra) {
     var imageData = [];
 
-    _scanImage(context, function(step, pixel, pixelData) {
+    _scanImage(context, function(step, strip, pixel, pixelData) {
       imageData[step] = imageData[step] || [];
-      imageData[step].push([pixelData.r, pixelData.g, pixelData.b])
+      imageData[step][strip] = imageData[step][strip] || [];
+      imageData[step][strip][pixel] = pixelData;
     });
 
     extra = extra || {};
@@ -103,21 +86,29 @@ function ImageScanner(options) {
   }
 
   self.scanVideo = function(video, callback, extra) {
-    var canvas = (extra || {}).canvas;
+    extra = extra || {};
+    var canvas = extra.canvas;
     if (!canvas) {
       var canvas = document.createElement('canvas');
+      extra.context = null;
     }
+
     canvas.width = canvas.height = width;
-    var context = canvas.getContext('2d');
+    var context = extra.context = extra.context || canvas.getContext('2d');
 
     var drawX, drawY, drawW, drawH;
 
     if (video.videoWidth > video.videoHeight) {
-      drawX = 0;
-      drawW = canvas.width;
+      // crop
+      drawH = drawW = video.videoHeight;
+      drawY = 0;
+      drawX = (video.videoWidth - video.videoHeight) / 2;
 
-      drawH = video.videoHeight * canvas.width / video.videoWidth;
-      drawY = (canvas.height - drawH) / 2;
+      // letter-box
+      // drawX = 0;
+      // drawW = canvas.width;
+      // drawH = video.videoHeight * canvas.width / video.videoWidth;
+      // drawY = (canvas.height - drawH) / 2;
     }
 
     var first = true;
@@ -135,6 +126,7 @@ function ImageScanner(options) {
     var seeked = function() {
       // console.log('seeked');
       context.drawImage(video, drawX, drawY, drawW, drawH);
+      context.drawImage(video, drawX, drawY, drawW, drawH, 0, 0, width, width);
 
       _scanContext(context, callback, extra);
 
@@ -197,4 +189,7 @@ function ImageScanner(options) {
   };
 }
 
-var imageScanner = new ImageScanner(settings);
+var imageScanner = new ImageScanner({
+  pixelConfig: settings.pixelConfig,
+  width: 500
+});

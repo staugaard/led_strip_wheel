@@ -80,23 +80,23 @@ void updateLEDS() {
 }
 
 void showCalibration() {
-  strips[0].setPixelColor(0,                255, 0, 0);
-  strips[0].setPixelColor(ledsPerStrip - 1, 255, 0, 0);
-  strips[0].setPixelColor(ledsPerStrip - 2, 255, 0, 0);
+  strips[0].setPixelColor(0,                50, 0, 0);
+  strips[0].setPixelColor(ledsPerStri`p - 1, 50, 0, 0);
+  strips[0].setPixelColor(ledsPerStrip - 2, 50, 0, 0);
   strips[0].show();
 
-  strips[1].setPixelColor(0,                0, 255, 0);
-  strips[1].setPixelColor(ledsPerStrip - 1, 0, 255, 0);
-  strips[1].setPixelColor(ledsPerStrip - 2, 0, 255, 0);
+  strips[1].setPixelColor(0,                0, 50, 0);
+  strips[1].setPixelColor(ledsPerStrip - 1, 0, 50, 0);
+  strips[1].setPixelColor(ledsPerStrip - 2, 0, 50, 0);
   strips[1].show();
 
-  strips[2].setPixelColor(0,                0, 0, 255);
-  strips[2].setPixelColor(ledsPerStrip - 1, 0, 0, 255);
-  strips[2].setPixelColor(ledsPerStrip - 2, 0, 0, 255);
+  strips[2].setPixelColor(0,                0, 0, 50);
+  strips[2].setPixelColor(ledsPerStrip - 1, 0, 0, 50);
+  strips[2].setPixelColor(ledsPerStrip - 2, 0, 0, 50);
   strips[2].show();
 
-  strips[3].setPixelColor(0,                255, 255, 255);
-  strips[3].setPixelColor(ledsPerStrip - 1, 255, 255, 255);
-  strips[3].setPixelColor(ledsPerStrip - 2, 255, 255, 255);
+  strips[3].setPixelColor(0,                50, 50, 50);
+  strips[3].setPixelColor(ledsPerStrip - 1, 50, 50, 50);
+  strips[3].setPixelColor(ledsPerStrip - 2, 50, 50, 50);
   strips[3].show();
 }

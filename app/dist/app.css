@@ -21,6 +21,11 @@ html, body {
       float: left; }
     #container header .nav-pills {
       float: right; }
+      #container header .nav-pills .settings a {
+        font-size: 20px;
+        line-height: 40px;
+        padding-top: 0;
+        padding-bottom: 0; }
     #container header h1, #container header .nav-pills {
       margin-top: 20px; }
     #container header p {

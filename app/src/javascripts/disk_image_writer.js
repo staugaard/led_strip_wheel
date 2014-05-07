@@ -1,82 +1,130 @@
 //= require settings
 
-function DiskImageWriter(options) {
+function DiskImageEncoder(options) {
   var self = this;
 
-  var resolution = options.resolution;
-  var pixelCount = options.pixelCount;
+  self.encodeImage = function(data) {
+    var encoded = {}
 
-  var bytesPerStrip      = pixelCount * 3;
-  var stepsBetweenStrips = resolution / 4;
+    var resolution = data.length;
+    var stripLengths = data[0].map(function(strip) { return strip.length});
+    var pixelCount = Math.max.apply(stripLengths, stripLengths);
+    var bytesPerStrip = pixelCount * 3;
 
+    encoded.buffer = new ArrayBuffer(resolution * 512);
+    var view = encoded.view = new Uint8Array(encoded.buffer);
 
-  self.optimizeData = function(compactData) {
-    var optimizedData = {}
+    var stepIndex, step, stripIndex, strip, pixelIndex, pixel, pixelOffset;
 
-    optimizedData.buffer = new ArrayBuffer(resolution * 512);
-    var view = optimizedData.view = new Uint8Array(optimizedData.buffer);
+    for (stepIndex = 0; stepIndex < resolution; stepIndex++) {
+      step = data[stepIndex];
 
-    var strips = [];
-    var stepIndex, pixelOffset;
+      for (stripIndex = 0; stripIndex < 4; stripIndex++) {
+        strip = step[stripIndex];
 
-    for (var step = 0; step < resolution; step++) {
+        for (pixelIndex = 0; pixelIndex < pixelCount; pixelIndex++) {
+          pixel = strip[pixelIndex] || {r: 0, g: 0, b: 0};
+          pixelOffset = (stepIndex * 512) + (stripIndex * bytesPerStrip) + (pixelIndex * 3);
 
-      for (var strip = 0; strip < 4; strip++) {
-        stepIndex = step + (strip * stepsBetweenStrips);
-        if (stepIndex >= resolution) { stepIndex = stepIndex - resolution; }
-
-        for (var pixel = 0; pixel < pixelCount; pixel++) {
-          pixelOffset = (step * 512) + (strip * bytesPerStrip) + (pixel * 3);
-          view[pixelOffset + 0] = compactData[stepIndex][pixel][0];
-          view[pixelOffset + 1] = compactData[stepIndex][pixel][1];
-          view[pixelOffset + 2] = compactData[stepIndex][pixel][2];
+          view[pixelOffset + 0] = pixel.r;
+          view[pixelOffset + 1] = pixel.g;
+          view[pixelOffset + 2] = pixel.b;
         }
-
       }
-
     }
 
-    return optimizedData;
-  };
+    return encoded;
+  }
 
-  self.writeFile = function(compactDatas, name) {
+  self.encodeMetadata = function(imageCount) {
+    var metadataBuffer = new ArrayBuffer(512);
+    var metadata = new Uint8Array(metadataBuffer);
+
+    metadata[0] = (imageCount >> 24) & 255;
+    metadata[1] = (imageCount >> 16) & 255;
+    metadata[2] = (imageCount >> 8) & 255;
+    metadata[3] = imageCount & 255;
+
+    return metadata
+  }
+}
+
+function ChromeDiskImageWriter(encoder) {
+  var self = this;
+
+  self.writeFile = function(data, name) {
     var index = 0;
-    self.writeImages(compactDatas.length, name, function(write) {
-      var data = compactDatas[index];
-      index++;
-      if (data) {
-        write(data);
+    self.writeImages(data.length, name, function(write) {
+      if (data[index]) {
+        write(data[index]);
       }
+      index++;
     });
   };
 
   self.writeImages = function(number, name, callback) {
-    var metadataBuffer = new ArrayBuffer(512);
-    var metadata = new Uint8Array(metadataBuffer);
-
-    var numberHighBits = number >> 8;
-    var numberLowBits  = number & 255;
-
-    metadata[0] = (number >> 24) & 255;
-    metadata[1] = (number >> 16) & 255;
-    metadata[2] = (number >> 8) & 255;
-    metadata[3] = number & 255;
-
     chrome.fileSystem.chooseEntry({type: 'saveFile', suggestedName: name + '.img'}, function(writableFileEntry) {
       writableFileEntry.createWriter(function(writer) {
         writer.onwriteend = function(e) {
-          callback(function(compactData) {
-            var imageBufferView = self.optimizeData(compactData).view;
+          callback(function(data) {
+            var imageBufferView = encoder.encodeImage(data).view;
             writer.write(new Blob([imageBufferView], {type: 'application/octet-stream'}));
           })
-          // console.log('write complete');
+          console.log('write complete');
         };
-        writer.write(new Blob([metadata], {type: 'application/octet-stream'}));
+        console.log('writing meta');
+        writer.write(new Blob([encoder.encodeMetadata(number)], {type: 'application/octet-stream'}));
+        console.log('wrote meta');
       });
     });
 
   };
-
 }
 
-var diskImageWriter = new DiskImageWriter(settings);
+function NodeDiskImageWriter(encoder) {
+  this.encoder = encoder;
+}
+
+NodeDiskImageWriter.prototype = {
+  writeFile: function(data, name) {
+    var index = 0;
+    this.writeImages(data.length, name, function(write) {
+      if (data[index]) {
+        write(data[index]);
+      }
+      index++;
+    });
+  },
+
+  writeImages: function(number, name, callback) {
+    var encoder = this.encoder;
+    var chooser = document.createElement('input');
+    chooser.type = 'file';
+    chooser.nwsaveas = name + '.img';
+    chooser.addEventListener("change", function(evt) {
+      var fs = require('fs');
+      var writeStream = fs.createWriteStream(this.value);
+      writeStream.write(new Buffer(diskImageEncoder.encodeMetadata(number)));
+
+      var writeFunction = function(data) {
+        var imageBufferView = encoder.encodeImage(data).view;
+        writeStream.write(new Buffer(imageBufferView));
+      }
+
+      for(var i = 0; i < number; i++) {
+        callback(writeFunction);
+      }
+
+      writeStream.end();
+    });
+    chooser.click();
+  }
+};
+
+var diskImageWriter;
+
+if (window.chrome) {
+  diskImageWriter = new ChromeDiskImageWriter(new DiskImageEncoder());
+} else {
+  diskImageWriter = new NodeDiskImageWriter(new DiskImageEncoder());
+}

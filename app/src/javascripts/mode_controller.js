@@ -14,4 +14,10 @@ function ModeCtrl($scope) {
     $scope.mode = 'video';
   }
 
+  $scope.switchToSettings = function() {
+    $scope.mode = 'settings';
+    var settings = angular.element('#settings').scope();
+    settings.updateFromSettings();
+  }
+
 }

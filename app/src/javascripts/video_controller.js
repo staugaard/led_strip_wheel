@@ -6,9 +6,15 @@ function VideoCtrl($scope) {
   $scope.pickVideoFile = function() {
     chrome.fileSystem.chooseEntry({type: 'openFile'}, function(fileEntry) {
       fileEntry.file(function(file) {
+        var handled = false;
         var video = document.createElement('video');
         video.addEventListener('canplaythrough', function(e) {
+          if (handled) {return;}
+          handled = true;
+
           var frames = Math.floor(video.duration * 10);
+
+          console.log("frames", frames);
 
           var next, write;
 

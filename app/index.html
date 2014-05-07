@@ -29,6 +29,9 @@
           <li ng-class="{active: mode == 'video'}">
             <a href="#" ng-click="switchToVideo()">Video</a>
           </li>
+          <li class="settings" ng-class="{active: mode == 'settings'}">
+            <a href="#" ng-click="switchToSettings()"><span class="glyphicon glyphicon-cog"></span></a>
+          </li>
         </ul>
 
         <p>
@@ -57,6 +60,10 @@
           Select Video ...
         </button>
         <canvas></canvas>
+      </section>
+
+      <section id="settings" ng-controller="SettingsCtrl" ng-show="mode == 'settings'">
+        <canvas width="{{image.width}}" height="{{image.height}}" />
       </section>
 
     </div>
